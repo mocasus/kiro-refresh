@@ -22,7 +22,7 @@ Usage:
   kiro-refresh <command> [options]
 
 Commands:
-  login                 Jalankan flow login resmi Kiro CLI
+  login                 Jalankan flow login resmi Kiro CLI jika belum login
   status                Tampilkan status login dari "kiro-cli whoami"
   doctor                Cek Node.js, kiro-cli, status auth, dan lokasi data store
   paths                 Tampilkan kandidat lokasi data store Kiro tanpa membacanya
@@ -269,11 +269,15 @@ function printStatus(kiroCli, options) {
     return 1;
   }
 
+  printAuthenticatedAccount(status.account);
+  return 0;
+}
+
+function printAuthenticatedAccount(account) {
   console.log("Authenticated: yes");
-  for (const [key, value] of Object.entries(status.account)) {
+  for (const [key, value] of Object.entries(account || {})) {
     console.log(`${humanizeKey(key)}: ${value}`);
   }
-  return 0;
 }
 
 function humanizeKey(key) {
@@ -381,6 +385,14 @@ Anda lewat OAuth consent flow milik Anda sendiri.`);
 }
 
 function login(kiroCli, loginArgs) {
+  const currentStatus = getWhoami(kiroCli, { showEmail: false });
+  if (currentStatus.authenticated) {
+    console.log("Already authenticated. Skipping Kiro CLI login.");
+    console.log("Use `kiro-refresh logout` first if you need to switch accounts.");
+    printAuthenticatedAccount(currentStatus.account);
+    return 0;
+  }
+
   console.log("Starting official Kiro CLI login flow...");
   const result = runInteractive(kiroCli, ["login", ...loginArgs]);
   if (result.error) {

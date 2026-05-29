@@ -10,11 +10,26 @@ kiro-refresh login
 
 Yang terjadi:
 
-1. Tool menjalankan `kiro-cli login`.
-2. Kiro CLI membuka browser default untuk login.
-3. Anda memilih metode login di portal Kiro.
-4. Setelah selesai, Kiro CLI menyimpan auth state-nya sendiri.
-5. Tool menjalankan `kiro-cli whoami --format json` untuk memastikan login aktif.
+1. Tool menjalankan `kiro-cli whoami --format json`.
+2. Jika sudah login, tool menampilkan akun aktif dan selesai dengan exit code `0`.
+3. Jika belum login, tool menjalankan `kiro-cli login`.
+4. Kiro CLI membuka browser default untuk login.
+5. Anda memilih metode login di portal Kiro.
+6. Setelah selesai, Kiro CLI menyimpan auth state-nya sendiri.
+7. Tool menjalankan `kiro-cli whoami --format json` untuk memastikan login aktif.
+
+Behavior ini membuat `kiro-refresh login` aman dijalankan berulang. Saat user sudah login, tool tidak memanggil `kiro-cli login`, sehingga error berikut tidak muncul:
+
+```text
+Already logged in, please logout with kiro-cli logout first
+```
+
+Untuk pindah akun:
+
+```powershell
+kiro-refresh logout
+kiro-refresh login
+```
 
 ## Login Remote atau Container
 

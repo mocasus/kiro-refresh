@@ -60,6 +60,15 @@ kiro-refresh login
 
 Kiro CLI akan membuka browser default. Setelah login selesai, tool otomatis menjalankan pengecekan status.
 
+Jika Anda sudah login, command ini aman dijalankan ulang. Tool akan menampilkan akun aktif dan tidak memanggil `kiro-cli login`, sehingga tidak muncul error `Already logged in, please logout with kiro-cli logout first`.
+
+Untuk pindah akun, logout dulu:
+
+```powershell
+kiro-refresh logout
+kiro-refresh login
+```
+
 Untuk remote machine, SSH, container, atau browser tidak bisa terbuka:
 
 ```powershell
