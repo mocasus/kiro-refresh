@@ -1,8 +1,27 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/kirodotdev/Kiro/main/assets/kiro-icon.png" width="110" alt="Kiro logo" />
+</p>
+
+<pre align="center">
+ _  ___                 _         _   _       _                 
+| |/ (_)_ __ ___       / \  _   _| |_| |__   | |__   ___ _ __  
+| ' /| | '__/ _ \     / _ \| | | | __| '_ \  | '_ \ / _ \ '__| 
+| . \| | | | (_) |   / ___ \ |_| | |_| | | | | | | |  __/ |    
+|_|\_\_|_|  \___/   /_/   \_\__,_|\__|_| |_| |_| |_|\___|_|    
+</pre>
+
+<p align="center">
+  <strong>Kiro Auth Helper</strong><br />
+  Local auth doctor and command wrapper for Kiro CLI.
+</p>
+
 # Kiro Auth Helper
 
 Tool lokal untuk membantu login dan mengecek status autentikasi Kiro CLI secara aman.
 
 Project ini awalnya dibuat untuk kebutuhan "ambil refresh token Kiro". Karena refresh token adalah kredensial jangka panjang, tool ini **tidak** mengekstrak atau mencetak token mentah dari browser, cookie, localStorage, profile browser, atau database internal Kiro. Sebagai gantinya, tool memakai flow resmi `kiro-cli login`, lalu mendeteksi status login lewat `kiro-cli whoami`.
+
+> Unofficial helper. Kiro logo is loaded from the official [kirodotdev/Kiro](https://github.com/kirodotdev/Kiro) repository asset.
 
 ## Fitur
 
