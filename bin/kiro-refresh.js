@@ -2,4 +2,4 @@
 
 const { main } = require("../src/cli");
 
-main(process.argv.slice(2));
+process.exitCode = main(process.argv.slice(2));

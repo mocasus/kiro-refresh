@@ -6,8 +6,10 @@ const test = require("node:test");
 const {
   MISSING_EMAIL_MESSAGE,
   formatAccountLines,
+  getApiKeyStatus,
   getKiroDataCandidates,
   maskEmail,
+  maskSecret,
   parseArgs,
   sanitizeWhoami
 } = require("../src/cli");
@@ -41,6 +43,33 @@ test("sanitizeWhoami can keep email when explicitly requested", () => {
   assert.equal(result.email, "alice@example.com");
 });
 
+test("maskSecret keeps only a small prefix and suffix", () => {
+  assert.equal(maskSecret("ksk_1234567890abcdef"), "ksk_...cdef");
+  assert.equal(maskSecret("short"), "sh...");
+});
+
+test("getApiKeyStatus never returns the raw secret", () => {
+  const status = getApiKeyStatus({ KIRO_API_KEY: "ksk_1234567890abcdef" });
+
+  assert.deepEqual(status, {
+    present: true,
+    variable: "KIRO_API_KEY",
+    masked: "ksk_...cdef",
+    length: 20
+  });
+});
+
+test("getApiKeyStatus handles missing API key", () => {
+  const status = getApiKeyStatus({});
+
+  assert.deepEqual(status, {
+    present: false,
+    variable: "KIRO_API_KEY",
+    masked: undefined,
+    length: undefined
+  });
+});
+
 test("formatAccountLines explains when whoami omits email", () => {
   const lines = formatAccountLines({
     accountType: "Social",
@@ -71,6 +100,36 @@ test("parseArgs maps device flow to Kiro CLI flag", () => {
     "--social",
     "google"
   ]);
+});
+
+test("parseArgs passes through kiro-cli args for run command after delimiter", () => {
+  const parsed = parseArgs([
+    "run",
+    "--",
+    "chat",
+    "--no-interactive",
+    "hello"
+  ]);
+
+  assert.equal(parsed.command, "run");
+  assert.deepEqual(parsed.options.runArgs, [
+    "chat",
+    "--no-interactive",
+    "hello"
+  ]);
+});
+
+test("parseArgs allows common options before run delimiter", () => {
+  const parsed = parseArgs([
+    "run",
+    "--kiro-cli",
+    "C:\\tools\\kiro-cli.exe",
+    "--",
+    "--version"
+  ]);
+
+  assert.equal(parsed.options.kiroCli, "C:\\tools\\kiro-cli.exe");
+  assert.deepEqual(parsed.options.runArgs, ["--version"]);
 });
 
 test("getKiroDataCandidates returns unique candidate paths", () => {

@@ -2,6 +2,42 @@
 
 `kiro-refresh` adalah wrapper kecil di atas `kiro-cli`. Tool ini tidak mengganti auth Kiro, hanya membantu menjalankan flow resmi dan mengecek hasilnya.
 
+## Ensure
+
+```powershell
+kiro-refresh ensure
+```
+
+Command ini memastikan Kiro CLI siap dipakai:
+
+1. Mengecek executable `kiro-cli`.
+2. Mengecek login lokal lewat `kiro-cli whoami --format json`.
+3. Jika login lokal belum ada, mengecek env `KIRO_API_KEY`.
+4. Jika keduanya belum tersedia, menjalankan flow login resmi Kiro CLI.
+
+Ini cocok dipakai sebelum script automation lokal.
+
+## Run
+
+```powershell
+kiro-refresh run -- --version
+kiro-refresh run -- chat --no-interactive "hello"
+```
+
+Semua argumen setelah `--` diteruskan apa adanya ke `kiro-cli`. Sebelum menjalankan command, tool memanggil `ensure` supaya error auth muncul lebih jelas.
+
+## API Key Check
+
+```powershell
+kiro-refresh check-api-key
+kiro-refresh check-api-key --json
+kiro-refresh setup-env
+```
+
+`check-api-key` hanya mengecek apakah `KIRO_API_KEY` tersedia. Tool tidak mencetak raw secret; output hanya memakai bentuk masked seperti `ksk_...abcd`.
+
+`setup-env` menampilkan contoh command untuk mengatur `KIRO_API_KEY` di PowerShell, CMD, atau Bash/Zsh.
+
 ## Login Lokal
 
 ```powershell

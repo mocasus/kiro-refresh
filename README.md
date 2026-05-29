@@ -9,6 +9,9 @@ Project ini awalnya dibuat untuk kebutuhan "ambil refresh token Kiro". Karena re
 - Login lokal lewat browser resmi Kiro CLI.
 - Device flow untuk SSH, container, atau environment yang tidak bisa membuka browser.
 - Deteksi status login dengan output aman, email dimask secara default.
+- `ensure` untuk memastikan Kiro CLI siap dipakai sebelum script lain jalan.
+- `run` untuk menjalankan command `kiro-cli` setelah auth/API key dicek.
+- `check-api-key` dan `setup-env` untuk automation/headless tanpa mencetak secret.
 - Pemeriksaan `doctor` untuk Node.js, `kiro-cli`, status auth, dan lokasi data store tanpa membaca isinya.
 - Dokumentasi penggunaan, troubleshooting, dan batasan keamanan.
 
@@ -30,8 +33,10 @@ Jalankan langsung dari repo:
 
 ```powershell
 npm start -- doctor
+npm start -- ensure
 npm start -- login
 npm start -- status
+npm start -- run -- --version
 ```
 
 Atau pasang command lokal:
@@ -39,8 +44,10 @@ Atau pasang command lokal:
 ```powershell
 npm link
 kiro-refresh doctor
+kiro-refresh ensure
 kiro-refresh login
 kiro-refresh status
+kiro-refresh run -- --version
 ```
 
 Jika `kiro-cli` ada di path khusus:
@@ -83,6 +90,12 @@ Kiro CLI akan menampilkan URL dan kode sekali pakai. Buka URL itu di browser man
 
 ```powershell
 kiro-refresh help
+kiro-refresh ensure
+kiro-refresh run -- --version
+kiro-refresh run -- chat --no-interactive "hello"
+kiro-refresh check-api-key
+kiro-refresh check-api-key --json
+kiro-refresh setup-env
 kiro-refresh login
 kiro-refresh login --device-flow
 kiro-refresh status
@@ -96,6 +109,28 @@ kiro-refresh explain-token
 ```
 
 Lihat detail di [docs/USAGE.md](docs/USAGE.md).
+
+## Workflow yang Berguna
+
+Pastikan environment siap sebelum script lain:
+
+```powershell
+kiro-refresh ensure
+```
+
+Jalankan command Kiro CLI lewat wrapper:
+
+```powershell
+kiro-refresh run -- --version
+kiro-refresh run -- chat --no-interactive "hello"
+```
+
+Untuk CI/headless, cek API key tanpa mencetak secret:
+
+```powershell
+kiro-refresh check-api-key
+kiro-refresh setup-env
+```
 
 ## Kenapa Tidak Mencetak Refresh Token?
 

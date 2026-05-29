@@ -24,6 +24,10 @@ Usage:
   kiro-refresh <command> [options]
 
 Commands:
+  ensure                Pastikan Kiro CLI siap dipakai; login otomatis jika perlu
+  run -- <args...>      Pastikan auth siap lalu teruskan command ke kiro-cli
+  check-api-key         Cek apakah env KIRO_API_KEY sudah diset tanpa mencetak secret
+  setup-env             Tampilkan template setup env untuk automation/headless
   login                 Jalankan flow login resmi Kiro CLI jika belum login
   status                Tampilkan status login dari "kiro-cli whoami"
   doctor                Cek Node.js, kiro-cli, status auth, dan lokasi data store
@@ -35,7 +39,7 @@ Commands:
   version               Tampilkan versi tool
 
 Options umum:
-  --json                Output JSON untuk command status/doctor/paths
+  --json                Output JSON untuk command status/doctor/paths/check-api-key
   --show-email          Jangan mask email pada output status/doctor
   --kiro-cli <path>     Path executable kiro-cli. Bisa juga pakai env KIRO_CLI_BIN
 
@@ -49,8 +53,11 @@ Options login:
 
 Contoh:
   kiro-refresh doctor
+  kiro-refresh ensure
   kiro-refresh login
   kiro-refresh login --device-flow
+  kiro-refresh check-api-key
+  kiro-refresh run -- chat --no-interactive "hello"
   kiro-refresh status --show-email
 
 Catatan keamanan:
@@ -65,11 +72,17 @@ function parseArgs(argv) {
     json: false,
     showEmail: false,
     kiroCli: process.env.KIRO_CLI_BIN || "kiro-cli",
-    loginArgs: []
+    loginArgs: [],
+    runArgs: []
   };
 
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i];
+
+    if (command === "run" && arg === "--") {
+      options.runArgs = args.slice(i + 1);
+      break;
+    }
 
     if (arg === "--json") {
       options.json = true;
@@ -88,6 +101,9 @@ function parseArgs(argv) {
       i += 1;
     } else if (arg === "--help" || arg === "-h") {
       options.help = true;
+    } else if (command === "run") {
+      options.runArgs = args.slice(i);
+      break;
     } else {
       throw new Error(`Option tidak dikenal: ${arg}`);
     }
@@ -123,6 +139,29 @@ function maskEmail(email) {
   return `${first}${"*".repeat(Math.min(Math.max(local.length - 1, 1), 6))}${last ? last : ""}@${domain}`;
 }
 
+function maskSecret(secret) {
+  if (!secret || typeof secret !== "string") {
+    return undefined;
+  }
+
+  const trimmed = secret.trim();
+  if (trimmed.length <= 8) {
+    return `${trimmed.slice(0, 2)}...`;
+  }
+
+  return `${trimmed.slice(0, 4)}...${trimmed.slice(-4)}`;
+}
+
+function getApiKeyStatus(env = process.env) {
+  const value = typeof env.KIRO_API_KEY === "string" ? env.KIRO_API_KEY.trim() : "";
+  return {
+    present: value.length > 0,
+    variable: "KIRO_API_KEY",
+    masked: value ? maskSecret(value) : undefined,
+    length: value.length || undefined
+  };
+}
+
 function sanitizeWhoami(raw, { showEmail = false } = {}) {
   if (!raw || typeof raw !== "object") {
     return {};
@@ -152,6 +191,17 @@ function runInteractive(command, args) {
     stdio: "inherit",
     windowsHide: false
   });
+}
+
+function ensureKiroCliAvailable(kiroCli) {
+  const version = getKiroCliVersion(kiroCli);
+  if (!commandExists(kiroCli) || !version.ok) {
+    console.log(`Kiro CLI: not ready (${version.error || "not found"})`);
+    console.log("Install Kiro CLI or pass --kiro-cli <path> / set KIRO_CLI_BIN.");
+    return { ok: false, version };
+  }
+
+  return { ok: true, version };
 }
 
 function getKiroCliVersion(kiroCli) {
@@ -302,6 +352,7 @@ function humanizeKey(key) {
 function printDoctor(kiroCli, options) {
   const version = getKiroCliVersion(kiroCli);
   const whoami = getWhoami(kiroCli, options);
+  const apiKey = getApiKeyStatus();
   const paths = getKiroDataCandidates();
   const report = {
     node: {
@@ -314,6 +365,7 @@ function printDoctor(kiroCli, options) {
       ...version
     },
     auth: whoami,
+    apiKey,
     dataStore: {
       note: "Path hanya dideteksi. Isi database tidak dibaca.",
       candidates: paths
@@ -334,6 +386,7 @@ function printDoctor(kiroCli, options) {
       console.log(`  ${humanizeKey(key)}: ${value}`);
     }
   }
+  console.log(`API key: ${report.apiKey.present ? `set (${report.apiKey.masked})` : "not set"}`);
   console.log("Data store candidates:");
   for (const candidate of paths) {
     console.log(`  ${candidate.exists ? "[found]" : "[missing]"} ${candidate.path}`);
@@ -353,6 +406,103 @@ function printPaths(options) {
     }
   }
   return 0;
+}
+
+function checkApiKey(options) {
+  const status = getApiKeyStatus();
+  if (options.json) {
+    console.log(JSON.stringify(status, null, 2));
+    return status.present ? 0 : 1;
+  }
+
+  if (status.present) {
+    console.log(`KIRO_API_KEY: set (${status.masked})`);
+    console.log("Ready for headless Kiro CLI usage.");
+    return 0;
+  }
+
+  console.log("KIRO_API_KEY: not set");
+  console.log("For headless automation, set KIRO_API_KEY in your shell or secret manager.");
+  console.log("Run `kiro-refresh setup-env` for examples.");
+  return 1;
+}
+
+function setupEnv() {
+  const status = getApiKeyStatus();
+  console.log("Kiro headless setup");
+  console.log("");
+  if (status.present) {
+    console.log(`Detected KIRO_API_KEY: ${status.masked}`);
+    console.log("");
+  }
+  console.log("PowerShell, current session:");
+  console.log('$env:KIRO_API_KEY = "ksk_xxxxxxxx"');
+  console.log("");
+  console.log("PowerShell, persistent user env:");
+  console.log('[Environment]::SetEnvironmentVariable("KIRO_API_KEY", "ksk_xxxxxxxx", "User")');
+  console.log("");
+  console.log("CMD, current session:");
+  console.log('set KIRO_API_KEY=ksk_xxxxxxxx');
+  console.log("");
+  console.log("Bash/Zsh, current session:");
+  console.log('export KIRO_API_KEY="ksk_xxxxxxxx"');
+  console.log("");
+  console.log("This tool never asks for, stores, or prints the raw API key.");
+  return 0;
+}
+
+function ensureReady(kiroCli, options, { interactiveLogin = true } = {}) {
+  const cli = ensureKiroCliAvailable(kiroCli);
+  if (!cli.ok) {
+    return 1;
+  }
+
+  const whoami = getWhoami(kiroCli, { showEmail: false });
+  if (whoami.authenticated) {
+    console.log("Kiro CLI session is ready.");
+    printAuthenticatedAccount(whoami.account);
+    return 0;
+  }
+
+  const apiKey = getApiKeyStatus();
+  if (apiKey.present) {
+    console.log(`Kiro API key is ready (${apiKey.masked}).`);
+    console.log("Using KIRO_API_KEY for headless flow.");
+    return 0;
+  }
+
+  console.log("Kiro auth is not ready.");
+  console.log(`Reason: ${whoami.error || "No active login and KIRO_API_KEY is not set."}`);
+
+  if (!interactiveLogin) {
+    console.log("Run `kiro-refresh login` or set KIRO_API_KEY.");
+    return 1;
+  }
+
+  return login(kiroCli, options.loginArgs);
+}
+
+function runKiroCommand(kiroCli, options) {
+  if (!options.runArgs.length) {
+    console.log("Missing kiro-cli arguments.");
+    console.log('Usage: kiro-refresh run -- chat --no-interactive "hello"');
+    console.log("Example: kiro-refresh run -- --version");
+    return 1;
+  }
+
+  const readyExitCode = ensureReady(kiroCli, options, { interactiveLogin: true });
+  if (readyExitCode !== 0) {
+    return readyExitCode;
+  }
+
+  console.log("");
+  console.log("Running kiro-cli command...");
+  const result = runInteractive(kiroCli, options.runArgs);
+  if (result.error) {
+    console.error(`Failed to start kiro-cli: ${result.error.message}`);
+    return 1;
+  }
+  return result.status || 0;
 }
 
 function openDocs() {
@@ -444,6 +594,14 @@ function main(argv) {
       printHelp();
     } else if (command === "version" || command === "--version" || command === "-V") {
       console.log(pkg.version);
+    } else if (command === "ensure") {
+      exitCode = ensureReady(options.kiroCli, options, { interactiveLogin: true });
+    } else if (command === "run") {
+      exitCode = runKiroCommand(options.kiroCli, options);
+    } else if (command === "check-api-key") {
+      exitCode = checkApiKey(options);
+    } else if (command === "setup-env") {
+      exitCode = setupEnv();
     } else if (command === "login") {
       exitCode = login(options.kiroCli, options.loginArgs);
     } else if (command === "status") {
@@ -480,9 +638,11 @@ module.exports = {
   DOC_URLS,
   MISSING_EMAIL_MESSAGE,
   formatAccountLines,
+  getApiKeyStatus,
   getKiroDataCandidates,
   main,
   maskEmail,
+  maskSecret,
   parseArgs,
   sanitizeWhoami
 };
