@@ -24,6 +24,12 @@ Behavior ini membuat `kiro-refresh login` aman dijalankan berulang. Saat user su
 Already logged in, please logout with kiro-cli logout first
 ```
 
+Output `Already authenticated. Skipping Kiro CLI login.` berarti sesi Kiro CLI sudah siap dipakai. Jika field email tidak muncul dari `kiro-cli whoami`, tool akan menampilkan:
+
+```text
+Email: not returned by kiro-cli whoami
+```
+
 Untuk pindah akun:
 
 ```powershell

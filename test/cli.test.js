@@ -4,6 +4,8 @@ const assert = require("node:assert/strict");
 const test = require("node:test");
 
 const {
+  MISSING_EMAIL_MESSAGE,
+  formatAccountLines,
   getKiroDataCandidates,
   maskEmail,
   parseArgs,
@@ -37,6 +39,19 @@ test("sanitizeWhoami can keep email when explicitly requested", () => {
   );
 
   assert.equal(result.email, "alice@example.com");
+});
+
+test("formatAccountLines explains when whoami omits email", () => {
+  const lines = formatAccountLines({
+    accountType: "Social",
+    provider: "Google"
+  });
+
+  assert.deepEqual(lines, [
+    "Account Type: Social",
+    "Provider: Google",
+    `Email: ${MISSING_EMAIL_MESSAGE}`
+  ]);
 });
 
 test("parseArgs maps device flow to Kiro CLI flag", () => {

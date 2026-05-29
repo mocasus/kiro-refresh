@@ -13,6 +13,8 @@ const DOC_URLS = {
   firewall: "https://kiro.dev/docs/privacy-and-security/firewalls/"
 };
 
+const MISSING_EMAIL_MESSAGE = "not returned by kiro-cli whoami";
+
 function printHelp() {
   console.log(`kiro-refresh v${pkg.version}
 
@@ -275,9 +277,20 @@ function printStatus(kiroCli, options) {
 
 function printAuthenticatedAccount(account) {
   console.log("Authenticated: yes");
-  for (const [key, value] of Object.entries(account || {})) {
-    console.log(`${humanizeKey(key)}: ${value}`);
+  for (const line of formatAccountLines(account)) {
+    console.log(line);
   }
+}
+
+function formatAccountLines(account) {
+  const entries = Object.entries(account || {});
+  const lines = entries.map(([key, value]) => `${humanizeKey(key)}: ${value}`);
+
+  if (!entries.some(([key]) => key.toLowerCase() === "email")) {
+    lines.push(`Email: ${MISSING_EMAIL_MESSAGE}`);
+  }
+
+  return lines;
 }
 
 function humanizeKey(key) {
@@ -388,6 +401,7 @@ function login(kiroCli, loginArgs) {
   const currentStatus = getWhoami(kiroCli, { showEmail: false });
   if (currentStatus.authenticated) {
     console.log("Already authenticated. Skipping Kiro CLI login.");
+    console.log("Kiro CLI session is ready to use.");
     console.log("Use `kiro-refresh logout` first if you need to switch accounts.");
     printAuthenticatedAccount(currentStatus.account);
     return 0;
@@ -464,6 +478,8 @@ function main(argv) {
 
 module.exports = {
   DOC_URLS,
+  MISSING_EMAIL_MESSAGE,
+  formatAccountLines,
   getKiroDataCandidates,
   main,
   maskEmail,

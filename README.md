@@ -62,6 +62,8 @@ Kiro CLI akan membuka browser default. Setelah login selesai, tool otomatis menj
 
 Jika Anda sudah login, command ini aman dijalankan ulang. Tool akan menampilkan akun aktif dan tidak memanggil `kiro-cli login`, sehingga tidak muncul error `Already logged in, please logout with kiro-cli logout first`.
 
+Jika `kiro-cli whoami` tidak mengembalikan email, output akan menampilkan `Email: not returned by kiro-cli whoami`. Itu normal untuk sebagian sesi/provider dan bukan berarti login gagal.
+
 Untuk pindah akun, logout dulu:
 
 ```powershell
