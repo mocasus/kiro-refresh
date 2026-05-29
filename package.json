@@ -1,0 +1,24 @@
+{
+  "name": "kiro-auth-helper",
+  "version": "0.1.0",
+  "description": "Local helper for Kiro CLI authentication status and safe login flows.",
+  "private": true,
+  "bin": {
+    "kiro-refresh": "./bin/kiro-refresh.js"
+  },
+  "scripts": {
+    "start": "node ./bin/kiro-refresh.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "kiro",
+    "cli",
+    "auth",
+    "login",
+    "local"
+  ],
+  "license": "MIT"
+}
