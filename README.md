@@ -83,6 +83,24 @@ kiro-refresh tui
 
 Panduan lebih lengkap ada di [docs/QUICKSTART.md](docs/QUICKSTART.md).
 
+## Preview Setelah Install
+
+Tampilan menu TUI setelah menjalankan:
+
+```powershell
+kiro-refresh tui
+```
+
+![Kiro Auth Helper TUI preview](docs/assets/preview-tui.png)
+
+Tampilan ketika auth Kiro CLI sudah siap:
+
+```powershell
+kiro-refresh ensure
+```
+
+![Kiro Auth Helper ensure preview](docs/assets/preview-ensure.png)
+
 ## Fitur
 
 - Login lokal lewat browser resmi Kiro CLI.

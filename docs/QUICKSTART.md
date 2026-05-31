@@ -26,6 +26,10 @@ npm install -g github:mocasus/kiro-refresh
 kiro-refresh tui
 ```
 
+Tampilannya kira-kira seperti ini:
+
+![Kiro Auth Helper TUI preview](assets/preview-tui.png)
+
 ## Menu yang Harus Dipilih
 
 Kalau bingung, mulai dari urutan ini:
@@ -52,6 +56,10 @@ Kiro CLI session is ready.
 ```
 
 berarti Kiro CLI sudah siap dipakai.
+
+Preview:
+
+![Kiro Auth Helper ensure preview](assets/preview-ensure.png)
 
 ## Jika Install dari GitHub Gagal
 
