@@ -5,6 +5,22 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 
+const {
+  DEFAULT_REDIRECT_URI,
+  DEFAULT_SCOPES,
+  addTokenMetadata,
+  buildAuthorizeUrl,
+  clearTokenResponse,
+  exchangeCodeForTokens,
+  getSafeOAuthConfig,
+  parseOAuthConfig,
+  randomUrlSafe,
+  readTokenResponse,
+  saveTokenResponse,
+  sha256Base64Url,
+  summarizeTokenResponse,
+  waitForOAuthCallback
+} = require("./oauth");
 const pkg = require("../package.json");
 
 const DOC_URLS = {
@@ -25,6 +41,12 @@ Usage:
 
 Commands:
   tui                   Buka menu terminal interaktif
+  oauth-config          Cek konfigurasi OAuth resmi dari env
+  oauth-login           Login OAuth resmi dan simpan token response lokal
+  oauth-status          Lihat token OAuth tersimpan dalam bentuk aman/masked
+  oauth-show-refresh-token
+                        Tampilkan refresh token OAuth; raw hanya dengan --reveal
+  oauth-clear           Hapus token OAuth lokal yang tersimpan
   ensure                Pastikan Kiro CLI siap dipakai; login otomatis jika perlu
   run -- <args...>      Pastikan auth siap lalu teruskan command ke kiro-cli
   check-api-key         Cek apakah env KIRO_API_KEY sudah diset tanpa mencetak secret
@@ -40,8 +62,9 @@ Commands:
   version               Tampilkan versi tool
 
 Options umum:
-  --json                Output JSON untuk command status/doctor/paths/check-api-key
+  --json                Output JSON untuk status/doctor/paths/check-api-key/oauth-config/oauth-status
   --show-email          Jangan mask email pada output status/doctor
+  --reveal              Untuk oauth-show-refresh-token: tampilkan raw refresh token
   --kiro-cli <path>     Path executable kiro-cli. Bisa juga pakai env KIRO_CLI_BIN
 
 Options login:
@@ -54,6 +77,9 @@ Options login:
 
 Contoh:
   kiro-refresh tui
+  kiro-refresh oauth-config
+  kiro-refresh oauth-login
+  kiro-refresh oauth-show-refresh-token --reveal
   kiro-refresh doctor
   kiro-refresh ensure
   kiro-refresh login
@@ -72,6 +98,7 @@ function parseArgs(argv) {
   const args = command === "help" ? argv.slice(command === argv[0] ? 1 : 0) : argv.slice(1);
   const options = {
     json: false,
+    reveal: false,
     showEmail: false,
     kiroCli: process.env.KIRO_CLI_BIN || "kiro-cli",
     loginArgs: [],
@@ -88,6 +115,8 @@ function parseArgs(argv) {
 
     if (arg === "--json") {
       options.json = true;
+    } else if (arg === "--reveal") {
+      options.reveal = true;
     } else if (arg === "--show-email") {
       options.showEmail = true;
     } else if (arg === "--kiro-cli") {
@@ -240,7 +269,7 @@ function renderTuiMenu(selectedIndex, items) {
   }
 }
 
-function runTui(options) {
+async function runTui(options) {
   if (!process.stdin.isTTY) {
     console.log("TUI requires an interactive terminal.");
     console.log("Use `kiro-refresh help` for non-interactive commands.");
@@ -271,6 +300,22 @@ function runTui(options) {
     {
       label: "Check KIRO_API_KEY",
       action: () => checkApiKey({ json: false })
+    },
+    {
+      label: "OAuth config",
+      action: () => oauthConfig({ json: false })
+    },
+    {
+      label: "OAuth login",
+      action: () => oauthLogin({ json: false, reveal: false })
+    },
+    {
+      label: "OAuth status",
+      action: () => oauthStatus({ json: false })
+    },
+    {
+      label: "Show OAuth refresh token (masked)",
+      action: () => oauthShowRefreshToken({ json: false, reveal: false })
     },
     {
       label: "Show env setup examples",
@@ -321,7 +366,7 @@ function runTui(options) {
       clearScreen();
       console.log(`> ${items[selectedIndex].label}`);
       console.log("");
-      const result = items[selectedIndex].action();
+      const result = await items[selectedIndex].action();
       if (result === "exit") {
         clearScreen();
         return 0;
@@ -586,7 +631,171 @@ function setupEnv() {
   console.log('export KIRO_API_KEY="ksk_xxxxxxxx"');
   console.log("");
   console.log("This tool never asks for, stores, or prints the raw API key.");
+  console.log("");
+  console.log("Official OAuth flow env:");
+  console.log('$env:OAUTH_CLIENT_ID = "your-client-id"');
+  console.log('$env:OAUTH_CLIENT_SECRET = "your-client-secret-if-needed"');
+  console.log('$env:OAUTH_AUTH_URL = "https://provider.example.com/oauth/authorize"');
+  console.log('$env:OAUTH_TOKEN_URL = "https://provider.example.com/oauth/token"');
+  console.log(`$env:OAUTH_REDIRECT_URI = "${DEFAULT_REDIRECT_URI}"`);
+  console.log(`$env:OAUTH_SCOPES = "${DEFAULT_SCOPES}"`);
   return 0;
+}
+
+function oauthConfig(options) {
+  const config = parseOAuthConfig();
+  const safeConfig = getSafeOAuthConfig(config);
+  if (options.json) {
+    console.log(JSON.stringify(safeConfig, null, 2));
+    return config.missing.length ? 1 : 0;
+  }
+
+  console.log("OAuth config");
+  console.log("------------");
+  console.log(`Client ID: ${safeConfig.clientId || "missing"}`);
+  console.log(`Client secret: ${safeConfig.clientSecret}`);
+  console.log(`Authorization URL: ${safeConfig.authUrl || "missing"}`);
+  console.log(`Token URL: ${safeConfig.tokenUrl || "missing"}`);
+  console.log(`Redirect URI: ${safeConfig.redirectUri}`);
+  console.log(`Scopes: ${safeConfig.scopes}`);
+  console.log(`Token store: ${safeConfig.tokenStorePath}`);
+  if (config.missing.length) {
+    console.log("");
+    console.log(`Missing env: ${config.missing.join(", ")}`);
+    console.log("Run `kiro-refresh setup-env` for the expected variable names.");
+    return 1;
+  }
+  return 0;
+}
+
+async function oauthLogin(options) {
+  const config = parseOAuthConfig();
+  if (config.missing.length) {
+    oauthConfig({ json: options.json });
+    return 1;
+  }
+
+  const state = randomUrlSafe(24);
+  const codeVerifier = randomUrlSafe(64);
+  const codeChallenge = sha256Base64Url(codeVerifier);
+  const authorizeUrl = buildAuthorizeUrl(config, state, codeChallenge);
+
+  console.log("Starting official OAuth Authorization Code + PKCE login...");
+  console.log(`Redirect URI: ${config.redirectUri}`);
+  console.log("Opening browser for provider login/consent.");
+  console.log("");
+  console.log(authorizeUrl);
+
+  const callbackPromise = waitForOAuthCallback(config.redirectUri, state, config.timeoutMs);
+  openUrl(authorizeUrl);
+
+  const { code } = await callbackPromise;
+  console.log("");
+  console.log("Authorization code received. Exchanging for tokens...");
+  const tokenResponse = await exchangeCodeForTokens(config, code, codeVerifier);
+  const tokens = addTokenMetadata(tokenResponse);
+  saveTokenResponse(tokens, config.tokenStorePath);
+
+  if (options.json) {
+    console.log(JSON.stringify(summarizeTokenResponse(tokens, maskSecret), null, 2));
+  } else {
+    console.log(`Saved token response: ${config.tokenStorePath}`);
+    printOAuthTokenSummary(tokens);
+    if (tokens.refresh_token) {
+      console.log("");
+      console.log("Refresh token received from the official token endpoint.");
+      console.log("Run `kiro-refresh oauth-show-refresh-token --reveal` to print the raw value.");
+    } else {
+      console.log("");
+      console.log("No refresh_token was returned. Check provider scopes/settings, usually offline_access or equivalent.");
+    }
+  }
+
+  return 0;
+}
+
+function oauthStatus(options) {
+  const config = parseOAuthConfig();
+  const result = readTokenResponse(config.tokenStorePath);
+  if (!result.found) {
+    if (options.json) {
+      console.log(JSON.stringify(result, null, 2));
+    } else {
+      console.log("No OAuth token response saved yet.");
+      console.log("Run `kiro-refresh oauth-login` first.");
+      console.log(`Expected store: ${config.tokenStorePath}`);
+    }
+    return 1;
+  }
+
+  const summary = {
+    found: true,
+    path: result.path,
+    tokens: summarizeTokenResponse(result.tokens, maskSecret)
+  };
+  if (options.json) {
+    console.log(JSON.stringify(summary, null, 2));
+  } else {
+    console.log(`Token store: ${result.path}`);
+    printOAuthTokenSummary(result.tokens);
+  }
+  return 0;
+}
+
+function oauthShowRefreshToken(options) {
+  const config = parseOAuthConfig();
+  const result = readTokenResponse(config.tokenStorePath);
+  if (!result.found) {
+    console.log("No OAuth token response saved yet.");
+    console.log("Run `kiro-refresh oauth-login` first.");
+    return 1;
+  }
+
+  const refreshToken = result.tokens.refresh_token;
+  if (!refreshToken) {
+    console.log("No refresh_token in the saved OAuth token response.");
+    console.log("Check provider scopes/settings and rerun `kiro-refresh oauth-login`.");
+    return 1;
+  }
+
+  if (options.json) {
+    console.log(JSON.stringify({
+      refresh_token: options.reveal ? refreshToken : maskSecret(refreshToken),
+      revealed: options.reveal
+    }, null, 2));
+    return 0;
+  }
+
+  if (!options.reveal) {
+    console.log(`Refresh token: ${maskSecret(refreshToken)}`);
+    console.log("");
+    console.log("Raw token is hidden by default.");
+    console.log("Run `kiro-refresh oauth-show-refresh-token --reveal` only on a trusted terminal.");
+    return 0;
+  }
+
+  console.log(refreshToken);
+  return 0;
+}
+
+function oauthClear() {
+  const config = parseOAuthConfig();
+  const removed = clearTokenResponse(config.tokenStorePath);
+  console.log(removed ? `Removed: ${config.tokenStorePath}` : `Nothing to remove: ${config.tokenStorePath}`);
+  return 0;
+}
+
+function printOAuthTokenSummary(tokens) {
+  const summary = summarizeTokenResponse(tokens, maskSecret);
+  console.log("OAuth token summary");
+  console.log("-------------------");
+  console.log(`Token type: ${summary.token_type || "not returned"}`);
+  console.log(`Scope: ${summary.scope || "not returned"}`);
+  console.log(`Received at: ${summary.received_at || "unknown"}`);
+  console.log(`Expires at: ${summary.expires_at || "not returned"}`);
+  console.log(`Access token: ${summary.access_token || "not returned"}`);
+  console.log(`Refresh token: ${summary.refresh_token || "not returned"}`);
+  console.log(`ID token: ${summary.id_token || "not returned"}`);
 }
 
 function ensureReady(kiroCli, options, { interactiveLogin = true } = {}) {
@@ -645,6 +854,10 @@ function runKiroCommand(kiroCli, options) {
 
 function openDocs() {
   const url = DOC_URLS.auth;
+  return openUrl(url);
+}
+
+function openUrl(url) {
   let result;
 
   if (process.platform === "win32") {
@@ -720,6 +933,10 @@ function logout(kiroCli) {
 }
 
 function main(argv) {
+  return mainAsync(argv);
+}
+
+async function mainAsync(argv) {
   try {
     const { command, options } = parseArgs(argv);
     if (options.help) {
@@ -733,7 +950,17 @@ function main(argv) {
     } else if (command === "version" || command === "--version" || command === "-V") {
       console.log(pkg.version);
     } else if (command === "tui") {
-      exitCode = runTui(options);
+      exitCode = await runTui(options);
+    } else if (command === "oauth-config") {
+      exitCode = oauthConfig(options);
+    } else if (command === "oauth-login") {
+      exitCode = await oauthLogin(options);
+    } else if (command === "oauth-status") {
+      exitCode = oauthStatus(options);
+    } else if (command === "oauth-show-refresh-token") {
+      exitCode = oauthShowRefreshToken(options);
+    } else if (command === "oauth-clear") {
+      exitCode = oauthClear();
     } else if (command === "ensure") {
       exitCode = ensureReady(options.kiroCli, options, { interactiveLogin: true });
     } else if (command === "run") {
@@ -781,6 +1008,7 @@ module.exports = {
   getApiKeyStatus,
   getKiroDataCandidates,
   main,
+  mainAsync,
   maskEmail,
   maskSecret,
   parseArgs,

@@ -12,6 +12,7 @@ Tujuan utamanya adalah membantu pengguna menjalankan Kiro CLI dengan lebih mudah
 - Pengecekan login.
 - Pengecekan environment lokal.
 - Wrapper command `kiro-cli`.
+- OAuth Authorization Code + PKCE flow untuk provider resmi.
 - Setup API key untuk automation.
 - Dokumentasi yang ramah pemula.
 
@@ -26,6 +27,8 @@ Project ini tidak akan:
 - Mengintersep traffic login.
 - Menggantikan Kiro CLI resmi.
 
+Catatan: project boleh menampilkan refresh token yang berasal dari OAuth token endpoint resmi setelah user login/consent. Itu berbeda dari ekstraksi token dari storage aplikasi lain.
+
 ## Current Scope
 
 Fitur yang sudah ada:
@@ -36,6 +39,11 @@ Fitur yang sudah ada:
 - `kiro-refresh status`
 - `kiro-refresh doctor`
 - `kiro-refresh run -- <args>`
+- `kiro-refresh oauth-config`
+- `kiro-refresh oauth-login`
+- `kiro-refresh oauth-status`
+- `kiro-refresh oauth-show-refresh-token`
+- `kiro-refresh oauth-clear`
 - `kiro-refresh check-api-key`
 - `kiro-refresh setup-env`
 - `kiro-refresh logout`

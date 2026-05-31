@@ -11,6 +11,8 @@ Tool ini boleh:
 - Menjalankan `kiro-cli logout`.
 - Mengecek keberadaan file data store tanpa membaca isinya.
 - Membuka dokumentasi resmi Kiro.
+- Menjalankan OAuth Authorization Code + PKCE flow resmi yang Anda konfigurasi sendiri.
+- Menampilkan refresh token dari token endpoint resmi hanya ketika user memakai flag eksplisit `--reveal`.
 
 Tool ini tidak boleh:
 
@@ -18,7 +20,7 @@ Tool ini tidak boleh:
 - Membaca localStorage/sessionStorage browser.
 - Membaca atau mendump database token Kiro.
 - Mengintersep traffic login.
-- Mencetak refresh token, access token, session token, atau API key.
+- Mencetak refresh token/access token/session token/API key yang diambil dari storage aplikasi lain.
 - Menulis kredensial ke `.env`, log, atau file lain.
 
 ## Kenapa Batas Ini Penting?
@@ -39,8 +41,10 @@ Risiko umum:
 - Pakai `kiro-cli logout` saat mesin tidak lagi dipercaya.
 - Pakai `KIRO_API_KEY` untuk otomasi resmi jika akun mendukung.
 - Simpan API key di secret manager atau environment variable, bukan di repository.
+- Untuk tugas OAuth, gunakan `oauth-login` dengan app/provider resmi dan scope seperti `offline_access`.
+- Gunakan `oauth-show-refresh-token --reveal` hanya di terminal yang dipercaya.
 - Rotasi dan revoke kredensial jika ada dugaan bocor.
 
 ## Jika Benar-Benar Butuh Token Mentah
 
-Gunakan OAuth/API/SDK resmi yang secara eksplisit mengembalikan token ke aplikasi milik Anda melalui consent flow yang terdokumentasi. Jangan mengekstrak token dari aplikasi desktop, browser storage, atau database internal.
+Gunakan OAuth/API/SDK resmi yang secara eksplisit mengembalikan token ke aplikasi milik Anda melalui consent flow yang terdokumentasi. Di project ini, jalurnya adalah `oauth-login`, lalu `oauth-show-refresh-token --reveal` jika provider memang mengembalikan refresh token. Jangan mengekstrak token dari aplikasi desktop, browser storage, atau database internal.

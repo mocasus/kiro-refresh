@@ -32,7 +32,61 @@ Kontrol:
 - `Enter`: jalankan menu.
 - `q`: keluar.
 
-Menu TUI menyediakan aksi umum: ensure auth, login, status, doctor, cek versi Kiro CLI, check API key, setup env, docs, logout, dan help.
+Menu TUI menyediakan aksi umum: ensure auth, login, status, doctor, cek versi Kiro CLI, check API key, OAuth config/login/status, refresh token OAuth masked, setup env, docs, logout, dan help.
+
+## Official OAuth Login
+
+Gunakan ini jika Anda punya OAuth app resmi dari provider/dosen dan token endpoint-nya memang mengembalikan refresh token.
+
+Minimal env:
+
+Cara file `.env`:
+
+```powershell
+copy .env.example .env
+notepad .env
+```
+
+Atau set langsung di PowerShell:
+
+```powershell
+$env:OAUTH_CLIENT_ID = "your-client-id"
+$env:OAUTH_CLIENT_SECRET = "your-client-secret-if-needed"
+$env:OAUTH_AUTH_URL = "https://provider.example.com/oauth/authorize"
+$env:OAUTH_TOKEN_URL = "https://provider.example.com/oauth/token"
+$env:OAUTH_REDIRECT_URI = "http://127.0.0.1:8787/callback"
+$env:OAUTH_SCOPES = "offline_access"
+```
+
+Jika provider butuh parameter tambahan agar refresh token keluar, pakai:
+
+```powershell
+$env:OAUTH_AUTH_PARAMS = "access_type=offline&prompt=consent"
+```
+
+Flow:
+
+```powershell
+kiro-refresh oauth-config
+kiro-refresh oauth-login
+kiro-refresh oauth-status
+kiro-refresh oauth-show-refresh-token
+kiro-refresh oauth-show-refresh-token --reveal
+```
+
+Default-nya refresh token dimask. Raw token hanya dicetak jika Anda memakai `--reveal`.
+
+Token response disimpan lokal di:
+
+```text
+%USERPROFILE%\.kiro-refresh\oauth-tokens.json
+```
+
+Hapus token lokal:
+
+```powershell
+kiro-refresh oauth-clear
+```
 
 ## Ensure
 

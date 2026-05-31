@@ -76,6 +76,8 @@ kiro-refresh tui
 ## Arti Command Penting
 
 - `kiro-refresh tui`: buka menu interaktif.
+- `kiro-refresh oauth-login`: login OAuth resmi jika provider/dosen memberi client dan endpoint.
+- `kiro-refresh oauth-show-refresh-token --reveal`: tampilkan refresh token hasil OAuth resmi.
 - `kiro-refresh ensure`: cek Kiro CLI dan login.
 - `kiro-refresh login`: login lewat flow resmi Kiro CLI.
 - `kiro-refresh status`: lihat status akun.
@@ -85,3 +87,5 @@ kiro-refresh tui
 ## Catatan Keamanan
 
 Tool ini tidak menampilkan refresh token mentah. Untuk automation headless, gunakan API key resmi lewat `KIRO_API_KEY`.
+
+Pengecualian aman: jika Anda menjalankan `oauth-login` dengan OAuth app resmi, refresh token yang dikembalikan provider bisa ditampilkan dengan `oauth-show-refresh-token --reveal`.

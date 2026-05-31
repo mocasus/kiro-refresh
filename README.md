@@ -33,6 +33,7 @@ Masalah yang diselesaikan:
 - User bingung command pertama apa yang harus dijalankan.
 - User ingin menu terminal sederhana, bukan menghafal banyak command.
 - User ingin menjalankan `kiro-cli` lewat wrapper yang mengecek auth dulu.
+- User butuh demo OAuth resmi yang bisa menerima dan menampilkan refresh token dari token endpoint.
 - User ingin setup API key untuk automation tanpa mencetak secret ke terminal.
 
 Target user:
@@ -45,6 +46,7 @@ Yang sengaja bukan tujuan:
 
 - Tidak mengambil refresh token mentah.
 - Tidak membaca cookie, localStorage, profile browser, atau database internal Kiro.
+- Refresh token hanya bisa ditampilkan jika didapat dari OAuth flow resmi milik provider/app yang Anda konfigurasi sendiri.
 - Tidak menggantikan Kiro CLI resmi.
 - Tidak menjadi automation framework besar.
 
@@ -132,6 +134,8 @@ kiro-refresh ensure
 
 - Login lokal lewat browser resmi Kiro CLI.
 - TUI terminal lewat `kiro-refresh tui`.
+- OAuth Authorization Code + PKCE flow lewat `oauth-login`.
+- Tampilkan refresh token OAuth resmi lewat `oauth-show-refresh-token --reveal`.
 - Device flow untuk SSH, container, atau environment yang tidak bisa membuka browser.
 - Deteksi status login dengan output aman, email dimask secara default.
 - `ensure` untuk memastikan Kiro CLI siap dipakai sebelum script lain jalan.
@@ -232,6 +236,12 @@ Kiro CLI akan menampilkan URL dan kode sekali pakai. Buka URL itu di browser man
 ```powershell
 kiro-refresh help
 kiro-refresh tui
+kiro-refresh oauth-config
+kiro-refresh oauth-login
+kiro-refresh oauth-status
+kiro-refresh oauth-show-refresh-token
+kiro-refresh oauth-show-refresh-token --reveal
+kiro-refresh oauth-clear
 kiro-refresh ensure
 kiro-refresh run -- --version
 kiro-refresh run -- chat --no-interactive "hello"
@@ -252,6 +262,47 @@ kiro-refresh explain-token
 
 Lihat detail di [docs/USAGE.md](docs/USAGE.md).
 
+## OAuth Login Resmi
+
+Fitur ini dipakai kalau tugas/project meminta refresh token yang benar-benar asli dari OAuth provider.
+
+Syaratnya: Anda harus punya OAuth app resmi dari provider/dosen, minimal:
+
+- `OAUTH_CLIENT_ID`
+- `OAUTH_AUTH_URL`
+- `OAUTH_TOKEN_URL`
+- `OAUTH_REDIRECT_URI`
+- scope yang mengembalikan refresh token, biasanya `offline_access`
+
+Cara paling gampang: copy `.env.example` menjadi `.env`, lalu isi bagian OAuth.
+
+```powershell
+copy .env.example .env
+notepad .env
+```
+
+Atau setup langsung di PowerShell:
+
+```powershell
+$env:OAUTH_CLIENT_ID = "your-client-id"
+$env:OAUTH_CLIENT_SECRET = "your-client-secret-if-needed"
+$env:OAUTH_AUTH_URL = "https://provider.example.com/oauth/authorize"
+$env:OAUTH_TOKEN_URL = "https://provider.example.com/oauth/token"
+$env:OAUTH_REDIRECT_URI = "http://127.0.0.1:8787/callback"
+$env:OAUTH_SCOPES = "offline_access"
+```
+
+Jalankan flow:
+
+```powershell
+kiro-refresh oauth-config
+kiro-refresh oauth-login
+kiro-refresh oauth-status
+kiro-refresh oauth-show-refresh-token --reveal
+```
+
+Catatan penting: command ini tidak mengambil token dari browser/app lain. Refresh token yang ditampilkan adalah token yang dikembalikan langsung oleh token endpoint resmi setelah login dan consent.
+
 ## TUI
 
 Untuk mode menu terminal:
@@ -266,7 +317,7 @@ Kontrol:
 - `Enter` untuk menjalankan.
 - `q` untuk keluar.
 
-Menu TUI saat ini menyediakan `ensure`, `login`, `status`, `doctor`, `kiro-cli --version`, `check-api-key`, `setup-env`, buka docs, logout, dan help.
+Menu TUI saat ini menyediakan `ensure`, `login`, `status`, `doctor`, `kiro-cli --version`, `check-api-key`, OAuth config/login/status, refresh token OAuth masked, `setup-env`, buka docs, logout, dan help.
 
 ## Workflow yang Berguna
 
@@ -303,6 +354,7 @@ Tool ini mengikuti batas aman:
 - Tidak melakukan traffic interception.
 - Tidak menulis token ke file `.env`.
 - Tidak mengirim data ke server mana pun.
+- Untuk OAuth resmi, raw refresh token hanya dicetak jika Anda memakai `oauth-show-refresh-token --reveal`.
 
 Untuk otomasi resmi, gunakan API key Kiro jika akun Anda mendukungnya:
 

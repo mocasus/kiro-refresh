@@ -4,5 +4,8 @@ npm-debug.log*
 .env.*
 !.env.example
 coverage/
+.kiro-refresh/
+oauth-tokens.json
+*.tokens.json
 .DS_Store
 Thumbs.db

@@ -1,6 +1,6 @@
 {
   "name": "kiro-cli-companion",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Beginner-friendly TUI, auth doctor, and command wrapper for Kiro CLI.",
   "private": true,
   "bin": {
