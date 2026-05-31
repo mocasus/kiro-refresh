@@ -2,6 +2,8 @@
 
 `kiro-refresh` adalah wrapper kecil di atas `kiro-cli`. Tool ini tidak mengganti auth Kiro, hanya membantu menjalankan flow resmi dan mengecek hasilnya.
 
+Baru mulai? Ikuti [Quick Start](QUICKSTART.md) dulu.
+
 ## Direct CLI
 
 Dari folder repo:

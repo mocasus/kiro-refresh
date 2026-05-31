@@ -23,6 +23,66 @@ Project ini awalnya dibuat untuk kebutuhan "ambil refresh token Kiro". Karena re
 
 > Unofficial helper. Kiro logo is loaded from the official [kirodotdev/Kiro](https://github.com/kirodotdev/Kiro) repository asset.
 
+## Quick Start untuk Pemula
+
+Pakai langkah ini kalau Anda hanya ingin langsung mencoba tool-nya.
+
+### 1. Buka PowerShell
+
+Tekan `Win`, ketik `PowerShell`, lalu buka.
+
+### 2. Pastikan Node.js sudah ada
+
+```powershell
+node --version
+npm --version
+```
+
+Kalau dua command itu menampilkan versi, lanjut. Kalau belum ada, install Node.js dulu dari <https://nodejs.org/>.
+
+### 3. Install tool dari GitHub
+
+```powershell
+npm install -g github:mocasus/kiro-refresh
+```
+
+### 4. Buka menu TUI
+
+```powershell
+kiro-refresh tui
+```
+
+Di menu TUI:
+
+- Pilih `Ensure Kiro auth is ready` untuk cek apakah Kiro sudah siap.
+- Pilih `Login` kalau belum login.
+- Pilih `Status` untuk melihat akun aktif.
+- Tekan `q` untuk keluar.
+
+### 5. Kalau ingin tanpa menu
+
+```powershell
+kiro-refresh ensure
+kiro-refresh status
+kiro-refresh run -- --version
+```
+
+Kalau `ensure` menampilkan `Kiro CLI session is ready`, berarti tool sudah siap dipakai.
+
+### Jika Install Global Gagal
+
+Clone repo dan jalankan dari folder project:
+
+```powershell
+git clone https://github.com/mocasus/kiro-refresh.git
+cd kiro-refresh
+npm install
+npm link
+kiro-refresh tui
+```
+
+Panduan lebih lengkap ada di [docs/QUICKSTART.md](docs/QUICKSTART.md).
+
 ## Fitur
 
 - Login lokal lewat browser resmi Kiro CLI.
@@ -212,6 +272,7 @@ kiro-cli chat --no-interactive "your prompt here"
 
 ## Dokumen Project
 
+- [Quick Start](docs/QUICKSTART.md)
 - [Usage](docs/USAGE.md)
 - [Security](docs/SECURITY.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
