@@ -28,7 +28,7 @@ kiro-refresh tui
 
 Tampilannya kira-kira seperti ini:
 
-![Kiro Auth Helper TUI preview](assets/preview-tui.png)
+![Kiro CLI Companion TUI preview](assets/preview-tui.png)
 
 ## Menu yang Harus Dipilih
 
@@ -59,7 +59,7 @@ berarti Kiro CLI sudah siap dipakai.
 
 Preview:
 
-![Kiro Auth Helper ensure preview](assets/preview-ensure.png)
+![Kiro CLI Companion ensure preview](assets/preview-ensure.png)
 
 ## Jika Install dari GitHub Gagal
 

@@ -1,7 +1,7 @@
 {
-  "name": "kiro-auth-helper",
-  "version": "0.3.0",
-  "description": "Local helper for Kiro CLI authentication status and safe login flows.",
+  "name": "kiro-cli-companion",
+  "version": "0.3.1",
+  "description": "Beginner-friendly TUI, auth doctor, and command wrapper for Kiro CLI.",
   "private": true,
   "bin": {
     "kiro-refresh": "./bin/kiro-refresh.js"

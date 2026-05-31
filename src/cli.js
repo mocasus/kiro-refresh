@@ -18,7 +18,7 @@ const MISSING_EMAIL_MESSAGE = "not returned by kiro-cli whoami";
 function printHelp() {
   console.log(`kiro-refresh v${pkg.version}
 
-Helper lokal untuk login dan mengecek status autentikasi Kiro secara aman.
+Kiro CLI Companion untuk TUI, login check, doctor, dan command wrapper.
 
 Usage:
   kiro-refresh <command> [options]
@@ -229,8 +229,8 @@ function pauseForKey(message = "Press any key to return to the menu...") {
 
 function renderTuiMenu(selectedIndex, items) {
   clearScreen();
-  console.log("Kiro Auth Helper TUI");
-  console.log("====================");
+  console.log("Kiro CLI Companion TUI");
+  console.log("======================");
   console.log("Use Up/Down, Enter to run, q to quit.");
   console.log("");
 

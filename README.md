@@ -11,17 +11,44 @@
 </pre>
 
 <p align="center">
-  <strong>Kiro Auth Helper</strong><br />
-  Local auth doctor and command wrapper for Kiro CLI.
+  <strong>Kiro CLI Companion</strong><br />
+  Beginner-friendly TUI, auth doctor, and command wrapper for Kiro CLI.
 </p>
 
-# Kiro Auth Helper
+# Kiro CLI Companion
 
-Tool lokal untuk membantu login dan mengecek status autentikasi Kiro CLI secara aman.
+`kiro-refresh` adalah companion tool untuk orang yang ingin memakai Kiro CLI tanpa bingung urusan login, status akun, setup API key, dan command terminal.
 
-Project ini awalnya dibuat untuk kebutuhan "ambil refresh token Kiro". Karena refresh token adalah kredensial jangka panjang, tool ini **tidak** mengekstrak atau mencetak token mentah dari browser, cookie, localStorage, profile browser, atau database internal Kiro. Sebagai gantinya, tool memakai flow resmi `kiro-cli login`, lalu mendeteksi status login lewat `kiro-cli whoami`.
+Fokus project ini sekarang jelas: **membuat Kiro CLI lebih mudah dipakai lewat TUI dan command helper**, terutama untuk user awam yang belum nyaman dengan terminal.
 
 > Unofficial helper. Kiro logo is loaded from the official [kirodotdev/Kiro](https://github.com/kirodotdev/Kiro) repository asset.
+
+## Arah Project
+
+Project ini adalah **Kiro CLI Companion**, bukan refresh-token extractor.
+
+Masalah yang diselesaikan:
+
+- User bingung apakah Kiro CLI sudah login atau belum.
+- User bingung command pertama apa yang harus dijalankan.
+- User ingin menu terminal sederhana, bukan menghafal banyak command.
+- User ingin menjalankan `kiro-cli` lewat wrapper yang mengecek auth dulu.
+- User ingin setup API key untuk automation tanpa mencetak secret ke terminal.
+
+Target user:
+
+- Pengguna Kiro CLI yang masih baru.
+- Pengguna Windows/PowerShell yang ingin workflow copy-paste.
+- Pengguna yang ingin TUI sederhana untuk login, status, doctor, dan run command.
+
+Yang sengaja bukan tujuan:
+
+- Tidak mengambil refresh token mentah.
+- Tidak membaca cookie, localStorage, profile browser, atau database internal Kiro.
+- Tidak menggantikan Kiro CLI resmi.
+- Tidak menjadi automation framework besar.
+
+Arah berikutnya ada di [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Quick Start untuk Pemula
 
@@ -91,7 +118,7 @@ Tampilan menu TUI setelah menjalankan:
 kiro-refresh tui
 ```
 
-![Kiro Auth Helper TUI preview](docs/assets/preview-tui.png)
+![Kiro CLI Companion TUI preview](docs/assets/preview-tui.png)
 
 Tampilan ketika auth Kiro CLI sudah siap:
 
@@ -99,7 +126,7 @@ Tampilan ketika auth Kiro CLI sudah siap:
 kiro-refresh ensure
 ```
 
-![Kiro Auth Helper ensure preview](docs/assets/preview-ensure.png)
+![Kiro CLI Companion ensure preview](docs/assets/preview-ensure.png)
 
 ## Fitur
 
@@ -265,6 +292,8 @@ kiro-refresh setup-env
 
 ## Kenapa Tidak Mencetak Refresh Token?
 
+Permintaan awal project ini memang berangkat dari kebutuhan refresh token. Setelah dipertegas, arah project digeser menjadi companion CLI yang aman untuk dipakai sehari-hari.
+
 Refresh token bisa dipakai untuk mendapatkan access token baru. Kalau token itu tercetak di terminal, masuk ke log, commit, screenshot, atau history shell, akun bisa disalahgunakan.
 
 Tool ini mengikuti batas aman:
@@ -291,6 +320,7 @@ kiro-cli chat --no-interactive "your prompt here"
 ## Dokumen Project
 
 - [Quick Start](docs/QUICKSTART.md)
+- [Roadmap](docs/ROADMAP.md)
 - [Usage](docs/USAGE.md)
 - [Security](docs/SECURITY.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
