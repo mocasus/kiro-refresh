@@ -2,6 +2,36 @@
 
 `kiro-refresh` adalah wrapper kecil di atas `kiro-cli`. Tool ini tidak mengganti auth Kiro, hanya membantu menjalankan flow resmi dan mengecek hasilnya.
 
+## Direct CLI
+
+Dari folder repo:
+
+```powershell
+npm link
+kiro-refresh tui
+```
+
+Atau install global dari GitHub:
+
+```powershell
+npm install -g github:mocasus/kiro-refresh
+kiro-refresh tui
+```
+
+## TUI
+
+```powershell
+kiro-refresh tui
+```
+
+Kontrol:
+
+- `Up/Down`: pilih menu.
+- `Enter`: jalankan menu.
+- `q`: keluar.
+
+Menu TUI menyediakan aksi umum: ensure auth, login, status, doctor, cek versi Kiro CLI, check API key, setup env, docs, logout, dan help.
+
 ## Ensure
 
 ```powershell

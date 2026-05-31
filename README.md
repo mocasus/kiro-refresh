@@ -26,6 +26,7 @@ Project ini awalnya dibuat untuk kebutuhan "ambil refresh token Kiro". Karena re
 ## Fitur
 
 - Login lokal lewat browser resmi Kiro CLI.
+- TUI terminal lewat `kiro-refresh tui`.
 - Device flow untuk SSH, container, atau environment yang tidak bisa membuka browser.
 - Deteksi status login dengan output aman, email dimask secara default.
 - `ensure` untuk memastikan Kiro CLI siap dipakai sebelum script lain jalan.
@@ -48,9 +49,24 @@ Di mesin ini, `kiro-cli` terdeteksi sebagai `kiro-cli-chat 2.2.2`.
 npm install
 ```
 
+Langsung pakai sebagai CLI dari folder repo:
+
+```powershell
+npm link
+kiro-refresh tui
+```
+
+Atau install global dari GitHub:
+
+```powershell
+npm install -g github:mocasus/kiro-refresh
+kiro-refresh tui
+```
+
 Jalankan langsung dari repo:
 
 ```powershell
+npm start -- tui
 npm start -- doctor
 npm start -- ensure
 npm start -- login
@@ -62,6 +78,7 @@ Atau pasang command lokal:
 
 ```powershell
 npm link
+kiro-refresh tui
 kiro-refresh doctor
 kiro-refresh ensure
 kiro-refresh login
@@ -109,6 +126,7 @@ Kiro CLI akan menampilkan URL dan kode sekali pakai. Buka URL itu di browser man
 
 ```powershell
 kiro-refresh help
+kiro-refresh tui
 kiro-refresh ensure
 kiro-refresh run -- --version
 kiro-refresh run -- chat --no-interactive "hello"
@@ -128,6 +146,22 @@ kiro-refresh explain-token
 ```
 
 Lihat detail di [docs/USAGE.md](docs/USAGE.md).
+
+## TUI
+
+Untuk mode menu terminal:
+
+```powershell
+kiro-refresh tui
+```
+
+Kontrol:
+
+- `Up/Down` untuk memilih menu.
+- `Enter` untuk menjalankan.
+- `q` untuk keluar.
+
+Menu TUI saat ini menyediakan `ensure`, `login`, `status`, `doctor`, `kiro-cli --version`, `check-api-key`, `setup-env`, buka docs, logout, dan help.
 
 ## Workflow yang Berguna
 

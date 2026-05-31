@@ -24,6 +24,7 @@ Usage:
   kiro-refresh <command> [options]
 
 Commands:
+  tui                   Buka menu terminal interaktif
   ensure                Pastikan Kiro CLI siap dipakai; login otomatis jika perlu
   run -- <args...>      Pastikan auth siap lalu teruskan command ke kiro-cli
   check-api-key         Cek apakah env KIRO_API_KEY sudah diset tanpa mencetak secret
@@ -52,6 +53,7 @@ Options login:
   --verbose             Teruskan flag verbose ke Kiro CLI
 
 Contoh:
+  kiro-refresh tui
   kiro-refresh doctor
   kiro-refresh ensure
   kiro-refresh login
@@ -191,6 +193,142 @@ function runInteractive(command, args) {
     stdio: "inherit",
     windowsHide: false
   });
+}
+
+function clearScreen() {
+  process.stdout.write("\x1Bc");
+}
+
+function readKey() {
+  const buffer = Buffer.alloc(8);
+  const bytesRead = fs.readSync(process.stdin.fd, buffer, 0, buffer.length, null);
+  return buffer.toString("utf8", 0, bytesRead);
+}
+
+function withRawInput(callback) {
+  const canUseRawMode = process.stdin.isTTY && typeof process.stdin.setRawMode === "function";
+  if (canUseRawMode) {
+    process.stdin.setRawMode(true);
+  }
+  process.stdin.resume();
+  try {
+    return callback();
+  } finally {
+    if (canUseRawMode) {
+      process.stdin.setRawMode(false);
+    }
+    process.stdin.pause();
+  }
+}
+
+function pauseForKey(message = "Press any key to return to the menu...") {
+  console.log("");
+  console.log(message);
+  withRawInput(() => readKey());
+}
+
+function renderTuiMenu(selectedIndex, items) {
+  clearScreen();
+  console.log("Kiro Auth Helper TUI");
+  console.log("====================");
+  console.log("Use Up/Down, Enter to run, q to quit.");
+  console.log("");
+
+  for (let index = 0; index < items.length; index += 1) {
+    const marker = index === selectedIndex ? ">" : " ";
+    console.log(`${marker} ${items[index].label}`);
+  }
+}
+
+function runTui(options) {
+  if (!process.stdin.isTTY) {
+    console.log("TUI requires an interactive terminal.");
+    console.log("Use `kiro-refresh help` for non-interactive commands.");
+    return 1;
+  }
+
+  const items = [
+    {
+      label: "Ensure Kiro auth is ready",
+      action: () => ensureReady(options.kiroCli, options, { interactiveLogin: true })
+    },
+    {
+      label: "Login",
+      action: () => login(options.kiroCli, options.loginArgs)
+    },
+    {
+      label: "Status",
+      action: () => printStatus(options.kiroCli, { json: false, showEmail: false })
+    },
+    {
+      label: "Doctor",
+      action: () => printDoctor(options.kiroCli, { json: false, showEmail: false })
+    },
+    {
+      label: "Run kiro-cli --version",
+      action: () => runKiroCommand(options.kiroCli, { ...options, runArgs: ["--version"] })
+    },
+    {
+      label: "Check KIRO_API_KEY",
+      action: () => checkApiKey({ json: false })
+    },
+    {
+      label: "Show env setup examples",
+      action: () => setupEnv()
+    },
+    {
+      label: "Open Kiro auth docs",
+      action: () => openDocs()
+    },
+    {
+      label: "Logout",
+      action: () => logout(options.kiroCli)
+    },
+    {
+      label: "Help",
+      action: () => {
+        printHelp();
+        return 0;
+      }
+    },
+    {
+      label: "Exit",
+      action: () => "exit"
+    }
+  ];
+
+  let selectedIndex = 0;
+  while (true) {
+    renderTuiMenu(selectedIndex, items);
+    const key = withRawInput(() => readKey());
+
+    if (key === "\u0003" || key.toLowerCase() === "q") {
+      clearScreen();
+      return 0;
+    }
+
+    if (key === "\u001b[A" || key === "k") {
+      selectedIndex = (selectedIndex - 1 + items.length) % items.length;
+      continue;
+    }
+
+    if (key === "\u001b[B" || key === "j") {
+      selectedIndex = (selectedIndex + 1) % items.length;
+      continue;
+    }
+
+    if (key === "\r" || key === "\n") {
+      clearScreen();
+      console.log(`> ${items[selectedIndex].label}`);
+      console.log("");
+      const result = items[selectedIndex].action();
+      if (result === "exit") {
+        clearScreen();
+        return 0;
+      }
+      pauseForKey();
+    }
+  }
 }
 
 function ensureKiroCliAvailable(kiroCli) {
@@ -594,6 +732,8 @@ function main(argv) {
       printHelp();
     } else if (command === "version" || command === "--version" || command === "-V") {
       console.log(pkg.version);
+    } else if (command === "tui") {
+      exitCode = runTui(options);
     } else if (command === "ensure") {
       exitCode = ensureReady(options.kiroCli, options, { interactiveLogin: true });
     } else if (command === "run") {
